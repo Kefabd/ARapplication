@@ -38,9 +38,10 @@ public class SendFrames : MonoBehaviour
             string responseText = request.downloadHandler.text;
             if (!string.IsNullOrEmpty(responseText))
             {
+                
+
                 // Parse the JSON response
                 Response jsonResponse = JsonUtility.FromJson<Response>(responseText);
-
                 Debug.Log(jsonResponse.message);
             }
             else
