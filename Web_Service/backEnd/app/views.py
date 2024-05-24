@@ -23,8 +23,18 @@ def handle_frames(request):
 
         # Convert the lists back to their original formats
         input_image = np.array(input_image_list, dtype=np.uint8)
-        input_keypoints = [cv2.KeyPoint(x=float(pt[0]), y=float(pt[1]), _size=1) for pt in input_keypoints_list]
-        input_descriptors = np.array(input_descriptors_list, dtype=np.float32)
+        input_keypoints = [
+            cv2.KeyPoint(
+                x=float(kp['pt'][0]), 
+                y=float(kp['pt'][1]), 
+                size=float(kp['size']),  # Corrected parameter name
+                angle=float(kp['angle']), 
+                response=float(kp['response']), 
+                octave=int(kp['octave']), 
+                class_id=int(kp['class_id'])
+            ) for kp in input_keypoints_list
+        ]
+        input_descriptors = np.array(input_descriptors_list, dtype=np.uint8)  # Adjust dtype if necessary
 
         # Process the uploaded image using the loaded reference data
         try:
@@ -54,12 +64,22 @@ def handle_image_target(request):
 
         # Store the data in the session
         request.session['input_image'] = input_image.tolist()  # Convert ndarray to list for serialization
-        request.session['input_keypoints'] = [kp.pt for kp in input_keypoints]  # Store keypoints as list of tuples
+        request.session['input_keypoints'] = [
+            {
+                'pt': kp.pt,
+                'size': kp.size,
+                'angle': kp.angle,
+                'response': kp.response,
+                'octave': kp.octave,
+                'class_id': kp.class_id
+            } for kp in input_keypoints
+        ]
         request.session['input_descriptors'] = input_descriptors.tolist()  # Convert ndarray to list for serialization
 
         return JsonResponse({'message': 'Image uploaded successfully'})
     else:
         return JsonResponse({'message': 'Image upload failed'}, status=400)
+
 
 def index(request):
     return HttpResponse("<h1>Hello, world. You're at the polls index.</h1>")
