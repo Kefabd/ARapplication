@@ -12,28 +12,16 @@ index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
 search_params = dict(checks=100)
 flann = cv2.FlannBasedMatcher(index_params, search_params)
 
-def load_reference_image():
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    images_dir = os.path.join(base_dir, 'Images')
-    
-    augment_image_path = os.path.join(images_dir, 'nature.jpg')
-    input_image_path = os.path.join(images_dir, 'mask.jpg')
-    
-    augment_image = cv2.imread(augment_image_path)
-    input_image = cv2.imread(input_image_path)
-    
-    if augment_image is None:
-        raise FileNotFoundError(f"Could not load the image at {augment_image_path}")
+def load_reference_image(nparr):
+    input_image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     if input_image is None:
-        raise FileNotFoundError(f"Could not load the image at {input_image_path}")
+        raise FileNotFoundError(f"Could not load the image at input image")
     
-    input_image = cv2.resize(input_image, (300, 400), interpolation=cv2.INTER_AREA)
-    augment_image = cv2.resize(augment_image, (300, 400))
-    
+    input_image = cv2.resize(input_image, (300, 400), interpolation=cv2.INTER_AREA)  
     gray_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2GRAY)
     keypoints, descriptors = detector.detectAndCompute(gray_image, None)
     
-    return gray_image, augment_image, keypoints, descriptors
+    return gray_image, keypoints, descriptors
 
 def compute_matches(descriptors_input, descriptors_output):
     if descriptors_input is not None and descriptors_output is not None:

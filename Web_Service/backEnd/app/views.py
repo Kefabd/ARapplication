@@ -3,28 +3,36 @@ from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import os
 import numpy as np
+import cv2
 from .controllers.orb_detector import load_reference_image, process_uploaded_image
-
-# Chargement des images de référence
-try:
-    input_image, aug_image, input_keypoints, input_descriptors = load_reference_image()
-except FileNotFoundError as e:
-    raise RuntimeError(f"Error loading reference images: {e}")
+import uuid
 
 @csrf_exempt
-def handle_image_upload(request):
+def handle_frames(request):
     if request.method == 'POST' and request.FILES.get('image'):
         image_file = request.FILES['image']
         nparr = np.frombuffer(image_file.read(), np.uint8)
-        
-        # Traitement de l'image téléchargée
+
+        # Retrieve the data from the session
+        input_image_list = request.session.get('input_image')
+        input_keypoints_list = request.session.get('input_keypoints')
+        input_descriptors_list = request.session.get('input_descriptors')
+
+        if not input_image_list or not input_keypoints_list or not input_descriptors_list:
+            return JsonResponse({'message': 'Reference image data not found'}, status=400)
+
+        # Convert the lists back to their original formats
+        input_image = np.array(input_image_list, dtype=np.uint8)
+        input_keypoints = [cv2.KeyPoint(x=float(pt[0]), y=float(pt[1]), _size=1) for pt in input_keypoints_list]
+        input_descriptors = np.array(input_descriptors_list, dtype=np.float32)
+
+        # Process the uploaded image using the loaded reference data
         try:
             marker_coordinates = process_uploaded_image(nparr, input_descriptors, input_keypoints)
         except FileNotFoundError as e:
             return JsonResponse({'message': str(e)}, status=400)
-        
+
         if marker_coordinates:
-            # Convertir marker_coordinates en une liste de tuples
             marker_coordinates_list = [(float(x), float(y)) for x, y in marker_coordinates]
             return JsonResponse({'message': str(marker_coordinates_list)})
         else:
@@ -32,6 +40,26 @@ def handle_image_upload(request):
     else:
         return JsonResponse({'message': 'Image upload failed'}, status=400)
 
+
+@csrf_exempt
+def handle_image_target(request):
+    if request.method == 'POST' and request.FILES.get('image'):
+        image_file = request.FILES['image']
+        nparr = np.frombuffer(image_file.read(), np.uint8)
+
+        try:
+            input_image, input_keypoints, input_descriptors = load_reference_image(nparr)
+        except FileNotFoundError as e:
+            return JsonResponse({'message': str(e)}, status=400)
+
+        # Store the data in the session
+        request.session['input_image'] = input_image.tolist()  # Convert ndarray to list for serialization
+        request.session['input_keypoints'] = [kp.pt for kp in input_keypoints]  # Store keypoints as list of tuples
+        request.session['input_descriptors'] = input_descriptors.tolist()  # Convert ndarray to list for serialization
+
+        return JsonResponse({'message': 'Image uploaded successfully'})
+    else:
+        return JsonResponse({'message': 'Image upload failed'}, status=400)
 
 def index(request):
     return HttpResponse("<h1>Hello, world. You're at the polls index.</h1>")
