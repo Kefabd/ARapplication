@@ -1,12 +1,6 @@
-
-
 using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
-
-
-
-
 
 public class CameraDevice : MonoBehaviour
 {
@@ -21,7 +15,7 @@ public class CameraDevice : MonoBehaviour
         imageSender = GetComponent<SendFrames>();
 
         // Get the RawImage component from the Canvas instance
-        RawImage rawImage = canvasInstance.GetComponentInChildren<RawImage > ();
+        RawImage rawImage = canvasInstance.GetComponentInChildren<RawImage>();
         if (rawImage != null)
         {
             // Initialize and start the webcam texture
