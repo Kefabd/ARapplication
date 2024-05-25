@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,6 +8,10 @@ using System.Globalization;
 
 public class SendFrames : MonoBehaviour
 {
+<<<<<<< HEAD
+=======
+
+>>>>>>> 2d7db4418479da194d9eb3ca9be88de4f3ceed3c
     public Texture2D imageTarget;
     public GameObject objectToPlace;  // The 3D object to place on the marker
 
@@ -33,10 +38,14 @@ public class SendFrames : MonoBehaviour
         StartCoroutine(SendImageToServer(imageData, "http://127.0.0.1:8000/app/frames/"));
     }
 
+<<<<<<< HEAD
    IEnumerator SendImageToServer(byte[] imageData, string url)
 {
     WWWForm form = new WWWForm();
     form.AddBinaryData("image", imageData, "captured_image.png", "image/png");
+=======
+
+>>>>>>> 2d7db4418479da194d9eb3ca9be88de4f3ceed3c
 
     UnityWebRequest request = UnityWebRequest.Post(url, form);
     yield return request.SendWebRequest();
@@ -66,11 +75,35 @@ public class SendFrames : MonoBehaviour
         }
         else
         {
+<<<<<<< HEAD
+=======
+            Debug.Log("Image sent successfully!");
+            // Handle the response from the server
+            string responseText = request.downloadHandler.text;
+            HandleServerResponse(responseText);
+        }
+    }
+
+            
+
+
+    private void HandleServerResponse(string responseText)
+    {
+        if (!string.IsNullOrEmpty(responseText))
+        {
+            // Parse the JSON response
+            Response jsonResponse = JsonUtility.FromJson<Response>(responseText);
+            Debug.Log(jsonResponse.message + ": " + jsonResponse.coordinates);
+        }
+        else
+        {
+>>>>>>> 2d7db4418479da194d9eb3ca9be88de4f3ceed3c
             Debug.LogError("Empty response from the server.");
         }
     }
 }
 
+<<<<<<< HEAD
 
 
 
@@ -159,4 +192,11 @@ void PlaceObjectOnMarker(Vector2[] coordinates)
     {
         public string message;
     }
+=======
+[System.Serializable]
+public class Response
+{
+    public string message;
+    public string coordinates;
+>>>>>>> 2d7db4418479da194d9eb3ca9be88de4f3ceed3c
 }

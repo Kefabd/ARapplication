@@ -45,6 +45,7 @@ public class CameraDevice : MonoBehaviour
             // Convert the Texture2D to a byte array in PNG format
             byte[] bytes = texture.EncodeToPNG();
             imageSender.SendImage(bytes);
+            
         }
     }
 }
