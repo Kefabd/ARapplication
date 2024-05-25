@@ -63,6 +63,9 @@ public class SendFrames : MonoBehaviour
         }
     }
 
+            
+
+
     private void HandleServerResponse(string responseText)
     {
         if (!string.IsNullOrEmpty(responseText))

@@ -46,6 +46,7 @@ def handle_frames(request):
             marker_coordinates_list = [(float(x), float(y)) for x, y in marker_coordinates]
             print(marker_coordinates_list)
             return JsonResponse({'message': "Marker detected", 'coordinates': str(marker_coordinates_list)})
+
         else:
             return JsonResponse({'message': 'No marker detected'})
     else:
