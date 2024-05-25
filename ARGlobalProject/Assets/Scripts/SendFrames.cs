@@ -1,10 +1,12 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
 public class SendFrames : MonoBehaviour
 {
-    
+
     public Texture2D imageTarget;
 
 
@@ -36,7 +38,7 @@ public class SendFrames : MonoBehaviour
         StartCoroutine(SendImageToServer(imageData, "http://127.0.0.1:8000/app/frames/"));
     }
 
-    
+
 
     IEnumerator SendImageToServer(byte[] imageData, string url)
     {
@@ -57,24 +59,31 @@ public class SendFrames : MonoBehaviour
             Debug.Log("Image sent successfully!");
             // Handle the response from the server
             string responseText = request.downloadHandler.text;
-            if (!string.IsNullOrEmpty(responseText))
-            {
-                
+            HandleServerResponse(responseText);
+        }
+    }
 
-                // Parse the JSON response
-                Response jsonResponse = JsonUtility.FromJson<Response>(responseText);
-                Debug.Log(jsonResponse.message);
-            }
-            else
-            {
-                Debug.LogError("Empty response from the server.");
-            }
+            
 
+
+    private void HandleServerResponse(string responseText)
+    {
+        if (!string.IsNullOrEmpty(responseText))
+        {
+            // Parse the JSON response
+            Response jsonResponse = JsonUtility.FromJson<Response>(responseText);
+            Debug.Log(jsonResponse.message + ": " + jsonResponse.coordinates);
+        }
+        else
+        {
+            Debug.LogError("Empty response from the server.");
         }
     }
 }
 
+[System.Serializable]
 public class Response
 {
     public string message;
+    public string coordinates;
 }
