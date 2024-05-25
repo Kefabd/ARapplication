@@ -164,9 +164,10 @@ public class SendFrames : MonoBehaviour
             Debug.Log("Center of marker: " + center);
 
             // objectToPlace.transform.position = center;
-            GameObject instantiatedObject = Instantiate(objectToPlace, center, Quaternion.identity);
+            Quaternion rotation = Quaternion.Euler(200, 0, 0);
+            GameObject instantiatedObject = Instantiate(objectToPlace, center, rotation );
 
-            instantiatedObject.transform.localScale = new Vector3(1, 1, 1); // Adjust scale if necessary
+            instantiatedObject.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f); // Adjust scale if necessary
             instantiatedObject.SetActive(true); // Ensure the object is active
         }
         else
