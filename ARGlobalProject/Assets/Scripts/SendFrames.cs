@@ -10,6 +10,7 @@ public class SendFrames : MonoBehaviour
 {
     public Texture2D imageTarget;
     public GameObject objectToPlace;  // The 3D object to place on the marker
+    private GameObject instantiatedObject; // Reference to the instantiated object
 
     private void Start()
     {
@@ -34,7 +35,6 @@ public class SendFrames : MonoBehaviour
         StartCoroutine(SendImageToServer(imageData, "http://127.0.0.1:8000/app/frames/"));
     }
 
-
     private IEnumerator SendImageToServer(byte[] imageData, string url)
     {
         WWWForm form = new WWWForm();
@@ -57,33 +57,25 @@ public class SendFrames : MonoBehaviour
                 if (!jsonResponse.message.Equals("No marker detected"))
                 {
                     Vector2[] markerCoordinates = ParseCoordinates(jsonResponse.coordinates);
-                    // Debug.Log("Coordonnées :");
-                    // for (int i = 0; i < markerCoordinates.Length; i++)
-                    // {
-                    //     Debug.Log("Point " + i + ": " + markerCoordinates[i]);
-                    // }
-
                     PlaceObjectOnMarker(markerCoordinates);
+                }
+                else
+                {
+                    DestroyInstantiatedObject();
                 }
             }
             else
             {
                 Debug.Log("Image sent successfully!");
-                // Handle the response from the server
                 HandleServerResponse(responseText);
             }
         }
     }
 
-
-            
-
-
     private void HandleServerResponse(string responseText)
     {
         if (!string.IsNullOrEmpty(responseText))
         {
-            // Parse the JSON response
             Response jsonResponse = JsonUtility.FromJson<Response>(responseText);
             Debug.Log(jsonResponse.message + ": " + jsonResponse.coordinates);
         }
@@ -92,31 +84,26 @@ public class SendFrames : MonoBehaviour
             Debug.LogError("Empty response from the server.");
         }
     }
+
     Vector2[] ParseCoordinates(string coordinatesString)
     {
         Debug.Log("Original coordinates string: " + coordinatesString);
 
-        // Trim the surrounding square brackets
         string trimmedString = coordinatesString.Trim(new char[] { '[', ']' });
         Debug.Log("Trimmed coordinates string: " + trimmedString);
 
-        // Split by "), (" to separate each pair of coordinates
         string[] pairs = trimmedString.Split(new string[] { "), (" }, System.StringSplitOptions.None);
 
         List<Vector2> coordinates = new List<Vector2>();
         foreach (string pair in pairs)
         {
-            // Remove any remaining parentheses
             string cleanedPair = pair.Replace("(", "").Replace(")", "");
             Debug.Log("Cleaned pair: " + cleanedPair);
 
-            // Split by comma to get individual x and y values
             string[] values = cleanedPair.Split(',');
-           
 
             if (values.Length == 2)
             {
-                // Trim any extra whitespace
                 string xStr = values[0].Trim();
                 string yStr = values[1].Trim();
 
@@ -142,37 +129,58 @@ public class SendFrames : MonoBehaviour
         return coordinates.ToArray();
     }
 
-
     void PlaceObjectOnMarker(Vector2[] coordinates)
     {
         if (coordinates != null && coordinates.Length >= 4)
         {
-            Vector2[] quadCoordinates = new Vector2[4];
-            for (int i = 0; i < 4; i++)
+            Vector2[] quadCoordinates = new Vector2[coordinates.Length];
+            for (int i = 0; i < coordinates.Length; i++)
             {
                 quadCoordinates[i] = coordinates[i];
             }
 
-            Vector3[] worldCoordinates = new Vector3[4];
+            Vector3[] worldCoordinates = new Vector3[coordinates.Length];
             for (int i = 0; i < quadCoordinates.Length; i++)
             {
                 worldCoordinates[i] = Camera.main.ScreenToWorldPoint(new Vector3(quadCoordinates[i].x, quadCoordinates[i].y, Camera.main.nearClipPlane + 1.0f));
+
+                // worldCoordinates[i].x -= 1.0f;
+                worldCoordinates[i].z = -8.8f;
                 Debug.Log("World Coordinate " + i + ": " + worldCoordinates[i]);
             }
 
-            Vector3 center = (worldCoordinates[0] + worldCoordinates[1] + worldCoordinates[2] + worldCoordinates[3]) / 4;
+            Vector3 center = Vector3.zero;
+            for (int i = 0; i < worldCoordinates.Length; i++)
+            {
+                center += worldCoordinates[i];
+            }
+            center /= worldCoordinates.Length;
             Debug.Log("Center of marker: " + center);
 
-            // objectToPlace.transform.position = center;
-            Quaternion rotation = Quaternion.Euler(200, 0, 0);
-            GameObject instantiatedObject = Instantiate(objectToPlace, center, rotation );
-
-            instantiatedObject.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f); // Adjust scale if necessary
-            instantiatedObject.SetActive(true); // Ensure the object is active
+            if (instantiatedObject == null)
+            {
+                Quaternion rotation = Quaternion.Euler(250, 0, 0);
+                instantiatedObject = Instantiate(objectToPlace, center, rotation);
+                instantiatedObject.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f); // Adjust scale if necessary
+                instantiatedObject.SetActive(true); // Ensure the object is active
+            }
+            else
+            {
+                instantiatedObject.transform.position = center;
+                // Update rotation if necessary
+            }
         }
         else
         {
             Debug.LogError("Insufficient marker coordinates received.");
+        }
+    }
+    void DestroyInstantiatedObject()
+    {
+        if (instantiatedObject != null)
+        {
+            Destroy(instantiatedObject);
+            instantiatedObject = null;
         }
     }
 }
